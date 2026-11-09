@@ -162,7 +162,7 @@ export const SAMPLE_LOTTERY_STATE: LotteryState = {
 
 export function calculateAdjacentNumbers(p1Slots: (string | null)[]): (string | null)[] {
   const result: (string | null)[] = [null, null, null, null];
-  
+
   const first1 = p1Slots[0];
   if (first1 && /^\d{5}$/.test(first1)) {
     const num = parseInt(first1, 10);

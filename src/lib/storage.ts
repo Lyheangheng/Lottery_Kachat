@@ -8,24 +8,40 @@ import { LotteryStateModel } from '@/models/LotteryState';
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'lottery-state.json');
 
-let isMongoConnected = false;
+declare global {
+  // eslint-disable-next-line no-var
+  var mongooseCache: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } | undefined;
+}
 
-async function connectMongo() {
-  const uri = process.env.MONGODB_URI;
+let cached = global.mongooseCache;
+
+if (!cached) {
+  cached = global.mongooseCache = { conn: null, promise: null };
+}
+
+async function connectMongo(): Promise<boolean> {
+  const uri = process.env.MONGODB_URI?.trim();
   if (!uri) return false;
-  if (isMongoConnected) return true;
+
+  if (cached?.conn) {
+    return true;
+  }
+
+  if (!cached?.promise) {
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 5000,
+    };
+    cached!.promise = mongoose.connect(uri, opts).then((m) => m);
+  }
 
   try {
-    if (mongoose.connection.readyState === 1) {
-      isMongoConnected = true;
-      return true;
-    }
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 2000 });
-    isMongoConnected = true;
-    console.log('Connected to MongoDB successfully');
+    cached!.conn = await cached!.promise;
+    console.log('[Database] Connected to MongoDB successfully');
     return true;
   } catch (err) {
-    console.warn('MongoDB connection failed, falling back to local file storage:', err);
+    cached!.promise = null;
+    console.warn('[Database] MongoDB connection failed, using local file storage:', err);
     return false;
   }
 }
@@ -62,9 +78,12 @@ export async function getLotteryState(): Promise<LotteryState> {
   const mongoOk = await connectMongo();
   if (mongoOk) {
     try {
-      let doc = await LotteryStateModel.findOne().lean();
+      const doc = await LotteryStateModel.findOne().lean();
       if (!doc) {
-        const initial = await LotteryStateModel.create(SAMPLE_LOTTERY_STATE);
+        // Seed MongoDB from the current local file state so data is preserved
+        const currentData = readLocalFile();
+        const initial = await LotteryStateModel.create(currentData);
+        console.log('[Database] Seeded MongoDB with current lottery data');
         return initial.toObject() as LotteryState;
       }
       return doc as unknown as LotteryState;
@@ -87,6 +106,8 @@ export async function saveLotteryState(state: LotteryState): Promise<LotteryStat
         doc.set(state);
         await doc.save();
       }
+      // Also sync to local backup file
+      writeLocalFile(state);
       return doc.toObject() as LotteryState;
     } catch (e) {
       console.error('Error updating MongoDB:', e);
@@ -95,4 +116,3 @@ export async function saveLotteryState(state: LotteryState): Promise<LotteryStat
   writeLocalFile(state);
   return state;
 }
-

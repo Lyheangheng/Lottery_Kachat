@@ -1,16 +1,14 @@
 'use client';
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import { RedCrossEmblem, SisaketEmblem } from '@/components/Emblems';
 import { PrizePoolModal } from '@/components/PrizePoolModal';
-import { LotteryState, PrizeDefinition } from '@/lib/types';
+import { LotteryState } from '@/lib/types';
 import { SAMPLE_LOTTERY_STATE } from '@/lib/constants';
 import {
   Maximize,
   Minimize,
   Search,
-  Lock,
   Trophy,
   CheckCircle2,
   AlertCircle,
@@ -229,16 +227,6 @@ export default function LotteryDisplayPage() {
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </button>
-
-            {/* Admin entry link */}
-            <Link
-              href="/admin"
-              className="flex items-center space-x-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition shadow-xs"
-              title="เข้าสู่ระบบจัดการเจ้าหน้าที่"
-            >
-              <Lock className="w-3 h-3 text-slate-400" />
-              <span>Admin</span>
-            </Link>
           </div>
         </div>
       </header>

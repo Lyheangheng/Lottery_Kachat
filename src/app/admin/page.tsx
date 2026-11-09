@@ -211,7 +211,7 @@ export default function AdminPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="รหัสผ่าน (ค่าเริ่มต้น: admin2570)"
+                placeholder="กรอกรหัสผ่าน"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-hidden focus:border-slate-800 text-slate-900 text-sm"
                 required
                 autoFocus
